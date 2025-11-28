@@ -9,18 +9,18 @@ import dotenv from 'dotenv';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../frontend/.env') });
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the project root (one level up from backend)
-app.use(express.static(path.join(__dirname, '../')));
+// Serve static files from the frontend folder
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Serve index.html on root
+// Serve index.html on root from frontend
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -139,4 +139,4 @@ ${JSON.stringify(contractDetails, null, 2)}
 
 
 const PORT = 3001;
-app.listen(PORT, () => console.log(`AI backend running on http://localhost:${PORT}`)); 
+app.listen(PORT, () => console.log(`AI backend running on http://localhost:${PORT}`));
