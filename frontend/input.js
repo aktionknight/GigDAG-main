@@ -10,7 +10,7 @@ let recognition;
 // Replace the simple mock AI extraction function with a backend call
 async function extractContractDetails(text) {
   try {
-    const res = await fetch('http://localhost:3001/extract', {
+    const res = await fetch('https://gigdag-main.onrender.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
@@ -22,7 +22,7 @@ async function extractContractDetails(text) {
     return await res.json();
   } catch (err) {
     console.error('AI extraction failed:', err);
-    alert('AI extraction failed. Please ensure the backend is running on http://localhost:3001 and try again.');
+    alert('AI extraction failed. Please ensure the backend is running on https://gigdag-main.onrender.com and try again.');
     return {
       description: text,
       parties: '',
