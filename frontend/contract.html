@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Smart Contract Generator - Contract</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+  <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">GigDAG</div>
+    <ul class="nav-links">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="https://youtu.be/rKlchDIl7js">Demo</a></li>
+      <li><a href="#" id="helpLink">Help</a></li>
+      <li><button id="navWalletBtn" class="wallet-btn">Connect Wallet</button></li>
+    </ul>
+  </nav>
+  <main class="main-layout-contract">
+    <section class="form-section-contract" id="contract-form">
+      <form class="contract-form">
+        <div class="form-group">
+          <label for="description">Natural Language Description</label>
+          <textarea id="description" name="description" placeholder="Describe the agreement in plain English" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="from">From (Party Offering Contract)</label>
+          <input type="text" id="from" name="from" placeholder="e.g., JP Morgan & Chase" required />
+          <input type="text" id="fromAddress" name="fromAddress" placeholder="From wallet address" required />
+        </div>
+        <div class="form-group">
+          <label for="to">To (Party Receiving Contract)</label>
+          <input type="text" id="to" name="to" placeholder="e.g., The Bbarn" required />
+          <input type="text" id="toAddress" name="toAddress" placeholder="To wallet address" required />
+        </div>
+        <div class="form-group">
+          <label for="deliverables">Deliverables</label>
+          <input type="text" id="deliverables" name="deliverables" placeholder="Landing page, UI design" required />
+        </div>
+        <div class="form-group">
+          <label for="deadline">Deadline</label>
+          <input type="date" id="deadline" name="deadline" required />
+        </div>
+        <div class="form-group">
+          <label for="payment">Payment Terms</label>
+          <input type="text" id="payment" name="payment" placeholder="10 BDAG on completion" required />
+        </div>
+        <div class="form-group">
+          <label for="milestones">Milestones</label>
+          <input type="text" id="milestones" name="milestones" placeholder="50% upfront, 50% after delivery" />
+        </div>
+        <div class="form-group">
+          <label for="penalties">Penalties / Refund Clauses</label>
+          <input type="text" id="penalties" name="penalties" placeholder="Full refund if not delivered in 5 days" />
+        </div>
+        <div class="form-actions-contract">
+          <button type="submit" class="submit-btn">Submit</button>
+        </div>
+        <!-- Placeholder: On submit, simulate Parsing... → Smart Contract Generated → Ready for Deployment -->
+      </form>
+    </section>
+    <aside class="contract-preview">
+      <h2>Contract Preview</h2>
+      <div class="preview-content">
+        <!-- Placeholder: Live contract summary updates as user fills form (JS to be added) -->
+        <div class="contract-summary">
+          <p><strong>Description:</strong> <span class="preview-description">(Your contract description will appear here)</span></p>
+          <p><strong>From:</strong> <span class="preview-from">(From party will appear here)</span></p>
+          <p><strong>To:</strong> <span class="preview-to">(To party will appear here)</span></p>
+          <p><strong>Deliverables:</strong> <span class="preview-deliverables">(Deliverables will appear here)</span></p>
+          <p><strong>Deadline:</strong> <span class="preview-deadline">(Deadline will appear here)</span></p>
+          <p><strong>Payment:</strong> <span class="preview-payment">(Payment terms will appear here)</span></p>
+          <p><strong>Milestones:</strong> <span class="preview-milestones">(Milestones will appear here)</span></p>
+          <p><strong>Penalties:</strong> <span class="preview-penalties">(Penalties/refund clauses will appear here)</span></p>
+        </div>
+        <div class="solidity-preview">
+          <h3>Sample Solidity Contract</h3>
+          <pre><code>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SmartContract {
+    address public client;
+    address public freelancer;
+    uint public amount;
+    // ...
+    // (Sample contract logic here) 
+}
+</code></pre>
+        </div>
+      </div>
+      <div class="center">
+      
+      </div>
+    </aside>
+  </main> 
+
+  <!-- Wallet Modal -->
+  <div id="walletModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeWalletModal">&times;</span>
+      <h2>Wallet Connection</h2>
+      <div class="wallet-status-box">
+        <div id="walletIndicator" class="status-dot"></div>
+        <p id="walletStatusText">Not Connected</p>
+      </div>
+      <p id="walletAddressDisplay" class="address-text"></p>
+      <button id="connectMetaMaskBtn" class="cta-btn full-width">Connect MetaMask</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeHelpModal">&times;</span>
+      <h2>Need Help?</h2>
+      <div id="helpModalBody" class="bdag-help-container">
+        <h2 class="bdag-help-header">How to Connect & Get BDAG Testnet Tokens</h2>
+        <div class="bdag-step">
+          <div class="bdag-step-title"><span class="bdag-step-number">1.</span> Configure Your Wallet (MetaMask)</div>
+          <p>Open your wallet settings, select <strong>"Add Network"</strong>, and choose <strong>"Add a network manually"</strong>. Enter the following details:</p>
+          <table class="bdag-config-table">
+            <tbody>
+              <tr><th>Network Name</th><td>BlockDAG Awakening</td></tr>
+              <tr><th>RPC URL</th><td><span class="bdag-code">https://rpc.awakening.bdagscan.com</span></td></tr>
+              <tr><th>Chain ID</th><td><span class="bdag-code">1043</span></td></tr>
+              <tr><th>Currency Symbol</th><td><span class="bdag-code">BDAG</span></td></tr>
+              <tr><th>Block Explorer</th><td><span class="bdag-code">https://bdagscan.com</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bdag-step">
+          <div class="bdag-step-title"><span class="bdag-step-number">2</span> Claim Test Tokens</div>
+          <p>Once your wallet is configured, you need test tokens to pay for gas fees. You can get these for free from the official faucet.</p>
+          <ol style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px;">
+            <li>Copy your wallet address from MetaMask.</li>
+            <li>Visit the <strong>BlockDAG Faucet</strong> below.</li>
+            <li>Paste your address and click <strong>"Request"</strong> or <strong>"Mint"</strong>.</li>
+          </ol>
+          <a href="https://bdagscan.com" target="_blank" class="bdag-button-link">Go to Explorer Faucet &rarr;</a>
+          <div class="bdag-note">
+            <strong>Tip:</strong> If the web faucet is undergoing maintenance, you can often request tokens in the <code>#faucet-testnet</code> channel of the official BlockDAG Discord server.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Built for Hackathons | Blockchain-ready | AI-powered</p>
+  </footer>
+  <script src="nav.js" defer></script>
+  <script>
+    // Prefill form fields from localStorage (if available)
+    window.addEventListener('DOMContentLoaded', function() {
+      const details = JSON.parse(localStorage.getItem('contractDetails') || '{}');
+      if (details) {
+        if (details.description) document.getElementById('description').value = details.description;
+        if (details.from) document.getElementById('from').value = details.from;
+        if (details.fromAddress) document.getElementById('fromAddress').value = details.fromAddress;
+        if (details.to) document.getElementById('to').value = details.to;
+        if (details.toAddress) document.getElementById('toAddress').value = details.toAddress;
+        if (details.deliverables) document.getElementById('deliverables').value = details.deliverables;
+        if (details.deadline) {
+          // Try to parse date if possible
+          const deadlineInput = document.getElementById('deadline');
+          const dateMatch = details.deadline.match(/\d{4}-\d{2}-\d{2}/);
+          if (dateMatch) {
+            deadlineInput.value = dateMatch[0];
+          } else {
+            deadlineInput.value = '';
+            deadlineInput.placeholder = details.deadline;
+          }
+        }
+        if (details.payment) document.getElementById('payment').value = details.payment;
+        if (details.milestones) document.getElementById('milestones').value = details.milestones;
+        if (details.penalties) document.getElementById('penalties').value = details.penalties;
+      }
+      // Live preview update
+      const updatePreview = () => {
+        document.querySelector('.preview-description').textContent = document.getElementById('description').value || '(Your contract description will appear here)';
+        document.querySelector('.preview-from').textContent =
+          (document.getElementById('from').value || '(From name)') + ' - ' +
+          (document.getElementById('fromAddress').value || '(From wallet address)');
+        document.querySelector('.preview-to').textContent =
+          (document.getElementById('to').value || '(To name)') + ' - ' +
+          (document.getElementById('toAddress').value || '(To wallet address)');
+        document.querySelector('.preview-deliverables').textContent = document.getElementById('deliverables').value || '(Deliverables will appear here)';
+        document.querySelector('.preview-deadline').textContent = document.getElementById('deadline').value || document.getElementById('deadline').placeholder || '(Deadline will appear here)';
+        document.querySelector('.preview-payment').textContent = document.getElementById('payment').value || '(Payment terms will appear here)';
+        document.querySelector('.preview-milestones').textContent = document.getElementById('milestones').value || '(Milestones will appear here)';
+        document.querySelector('.preview-penalties').textContent = document.getElementById('penalties').value || '(Penalties/refund clauses will appear here)';
+      };
+      document.querySelectorAll('.contract-form input, .contract-form textarea').forEach(el => {
+        el.addEventListener('input', updatePreview);
+      });
+      updatePreview();
+      // var picker = new Pikaday({
+      //   field: document.getElementById('deadline'),
+      //   format: 'DD-MM-YYYY',
+      //   yearRange: [1950, 2050], 
+      //   showMonthAfterYear: false,
+      //   firstDay: 1,
+      //   theme: 'custom-pikaday', 
+      //   toString(date, format) {
+      //     // Format date as DD-MM-YYYY
+      //     const day = ('0' + date.getDate()).slice(-2);
+      //     const month = ('0' + (date.getMonth() + 1)).slice(-2);
+      //     const year = date.getFullYear();
+      //     return `${day}-${month}-${year}`;
+      //   }
+      // });
+
+      // Handle form submit - only save to localStorage and redirect
+      document.querySelector('.contract-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const contractDetails = {
+          description: document.getElementById('description').value,
+          from: document.getElementById('from').value,
+          fromAddress: document.getElementById('fromAddress').value,
+          to: document.getElementById('to').value,
+          toAddress: document.getElementById('toAddress').value,
+          deliverables: document.getElementById('deliverables').value,
+          deadline: document.getElementById('deadline').value,
+          payment: document.getElementById('payment').value,
+          milestones: document.getElementById('milestones').value,
+          penalties: document.getElementById('penalties').value
+        };
+        localStorage.setItem('contractDetails', JSON.stringify(contractDetails));
+        window.location.href = 'deploy.html';
+      });
+    });
+  </script>
+</body>
+</html> 

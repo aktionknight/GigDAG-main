@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GigDAG - AI Smart Contract Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">GigDAG</div>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="https://youtu.be/rKlchDIl7js">Demo</a></li>
+      <li><a href="#" id="helpLink">Help</a></li>
+      <li><button id="navWalletBtn" class="wallet-btn">Connect Wallet</button></li>
+    </ul>
+  </nav>
+
+  <main class="home-hero">
+    <div class="animation-container">
+      <!-- Document signing animation -->
+      <div class="ai-contract-hero">
+        <div class="contract-sheet">
+          <div class="contract-lines"></div>
+          <div class="contract-lines short"></div>
+          <div class="contract-signature"></div>
+          <div class="contract-sparkle"></div>
+        </div>
+        <div class="ai-pen"></div>
+      </div>
+      
+      <h1 class="animated-title"><span>GigDAG</span><span> - AI</span> <span>Smart</span> <span>Contract</span> <span>Generator</span></h1>
+      <p class="tagline">Create legally binding smart contracts in minutes using AI + Blockchain</p>
+      
+      <!-- Changed to button to trigger modal -->
+      <button id="startCreationBtn" class="cta-btn large">Start Contract Creation</button>
+    </div>
+  </main>
+
+  <section class="features-section" id="about">
+    <h2>Why Use Our Smart Contract Generator?</h2>
+    <div class="features-list">
+      <div class="feature-card">
+        <h3>AI-Powered Simplicity</h3>
+        <p>Describe your contract in plain English and let our AI handle the rest.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Memorandum of Understanding</h3>
+        <p>Generate contracts that are ready for review and blockchain deployment.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Fast & Secure</h3>
+        <p>Create, preview, and deploy contracts in minutes, with your data always protected.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="how-steps">
+      <div class="how-step">
+        <span class="how-step-number">1</span>
+        <strong>Describe:</strong>
+        <p>Tell us your contract terms in plain English.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-number">2</span>
+        <strong>Review:</strong>
+        <p>Instantly preview the generated contract and make edits.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-step-number">3</span>
+        <strong>Deploy:</strong>
+        <p>Download or deploy your contract to the blockchain.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+     <p>Built with <3 by Aakrit, Manas, Mehar & Mannat</p>
+  </footer>
+
+  <!-- Wallet Modal -->
+  <div id="walletModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeWalletModal">&times;</span>
+      <h2>Wallet Connection</h2>
+      <div class="wallet-status-box">
+        <div id="walletIndicator" class="status-dot"></div>
+        <p id="walletStatusText">Not Connected</p>
+      </div>
+      <p id="walletAddressDisplay" class="address-text"></p>
+      <button id="connectMetaMaskBtn" class="cta-btn full-width">Connect MetaMask</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeHelpModal">&times;</span>
+      <h2>Need Help?</h2>
+      <div id="helpModalBody" class="bdag-help-container">
+        <h2 class="bdag-help-header">How to Connect & Get BDAG Testnet Tokens</h2>
+
+    <!-- Step 1: Configuration -->
+    <div class="bdag-step">
+        <div class="bdag-step-title">
+            <span class="bdag-step-number">1. </span>
+            Configure Your Wallet (MetaMask)
+        </div>
+        <p>Open your wallet settings, select <strong>"Add Network"</strong>, and choose <strong>"Add a network manually"</strong>. Enter the following details:</p>
+        
+        <table class="bdag-config-table">
+            <tbody>
+                <tr>
+                    <th>Network Name</th>
+                    <td>BlockDAG Awakening</td>
+                </tr>
+                <tr>
+                    <th>RPC URL</th>
+                    <td><span class="bdag-code">https://rpc.awakening.bdagscan.com</span></td>
+                </tr>
+                <tr>
+                    <th>Chain ID</th>
+                    <td><span class="bdag-code">1043</span></td>
+                </tr>
+                <tr>
+                    <th>Currency Symbol</th>
+                    <td><span class="bdag-code">BDAG</span></td>
+                </tr>
+                <tr>
+                    <th>Block Explorer</th>
+                    <td><span class="bdag-code">https://bdagscan.com</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Step 2: Faucet -->
+    <div class="bdag-step">
+        <div class="bdag-step-title">
+            <span class="bdag-step-number">2</span>
+            Claim Test Tokens
+        </div>
+        <p>Once your wallet is configured, you need test tokens to pay for gas fees. You can get these for free from the official faucet.</p>
+        
+        <ol style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px;">
+            <li>Copy your wallet address from MetaMask.</li>
+            <li>Visit the <strong>BlockDAG Faucet</strong> below.</li>
+            <li>Paste your address and click <strong>"Request"</strong> or <strong>"Mint"</strong>.</li>
+        </ol>
+
+        <a href="https://bdagscan.com" target="_blank" class="bdag-button-link">Go to Explorer Faucet &rarr;</a>
+
+        <div class="bdag-note">
+            <strong>Tip:</strong> If the web faucet is undergoing maintenance, you can often request tokens in the <code>#faucet-testnet</code> channel of the official BlockDAG Discord server.
+        </div>
+    </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="nav.js" defer></script>
+</body>
+</html>

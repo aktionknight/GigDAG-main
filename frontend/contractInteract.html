@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract Interaction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    .container { max-width: 600px; margin: auto; }
+    .section { margin-bottom: 2em; padding: 1em; border: 1px solid #ccc; border-radius: 8px; }
+    .progress-bar { width: 100%; background: #eee; border-radius: 5px; overflow: hidden; height: 20px; }
+    .progress { background: #4caf50; height: 100%; transition: width 0.5s; }
+    .hidden { display: none; }
+    .address { font-family: monospace; }
+    button { padding: 0.5em 1em; margin-top: 1em; }
+    label { display: block; margin-top: 1em; }
+    input[type=text], input[type=date] { width: 100%; padding: 0.5em; margin-top: 0.5em; }
+  </style> -->
+</head>
+<body>
+  <div class="contract-interact-container">
+    <h1>Contract Interaction</h1>
+    <div id="wallet-section" class="contract-interact-section">
+      <button id="connectWalletBtn">Connect MetaMask Wallet</button>
+      <div id="walletAddress" class="contract-interact-address"></div>
+      <div id="networkWarning" style="color: red; display: none;">
+        Please switch to BlockDAG Testnet in MetaMask.
+        <button id="switchNetworkBtn" style="margin-left: 10px; padding: 5px 10px;">Switch to BlockDAG</button>
+      </div>
+    </div>
+
+    <div id="contract-section" class="contract-interact-section hidden">
+      <h2>Contract Details</h2>
+      <div id="debugInfo" style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;">
+        <strong>Debug Info:</strong><br>
+        <span id="debugContractAddress">Contract Address: </span><br>
+        <span id="debugCurrentAccount">Current Account: </span><br>
+        <span id="debugStatus">Status: </span><br>
+        <span id="debugIsFreelancer">Is Freelancer: </span><br>
+        <span id="debugIsClient">Is Client: </span><br>
+        <span id="debugContractState" style="margin-top: 5px; display: block;">Contract State: Loading...</span>
+      </div>
+      <div><b>Description:</b> <span id="desc"></span></div>
+      <div><b>Client:</b> <span id="clientAddr" class="contract-interact-address"></span></div>
+      <div><b>Freelancer:</b> <span id="freelancerAddr" class="contract-interact-address"></span></div>
+      <div><b>Deliverables:</b> <span id="deliverables"></span></div>
+      <div><b>Deadline:</b> <span id="deadline"></span></div>
+      <div><b>Payment:</b> <span id="payment"></span></div>
+      <div><b>Milestones:</b> <span id="milestones"></span></div>
+      <div><b>Penalties:</b> <span id="penalties"></span></div>
+      <div><b>Status:</b> <span id="status"></span></div>
+      <div id="progressContainer" class="contract-interact-progress-container">
+        <b>Deadline Progress:</b>
+        <div class="contract-interact-progress-bar"><div id="progressBar" class="contract-interact-progress"></div></div>
+        <div id="daysLeft"></div>
+      </div>
+      <div class="contract-interact-btn-row">
+      <div id="clientActions" class="hidden">
+        <button id="approveBtn" class="submit-btn">Approve Contract & Release Funds</button>
+      </div>
+      </div>
+      <div id="result" style="margin-top: 1.2em; padding: 0.8em 1.2em; border-radius: 8px; display: none;"></div>
+    </div>
+    <div id="notParticipant" class="contract-interact-not-participant hidden" style="color: red;">You are not a participant in this contract.</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.6.9/dist/ethers.umd.min.js"></script>
+  <script>
+    // Simulated contract data (would come from backend or blockchain in real app)
+    let contractData = null;
+    let currentAccount = null;
+    let contractStatus = 'pending'; // 'pending', 'approved', 'withdrawn'
+
+    // Fantom Testnet chainId
+    // BlockDAG Testnet chainId
+    const BLOCKDAG_TESTNET_CHAINID = '0x413'; // 1043 in hex
+
+    // Wallet connect logic
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert('MetaMask is not installed!');
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      currentAccount = accounts[0];
+      document.getElementById('walletAddress').textContent = 'Connected: ' + currentAccount;
+      // Check Fantom testnet
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      document.getElementById('networkWarning').style.display = (chainId !== BLOCKDAG_TESTNET_CHAINID) ? '' : 'none';
+      updateUI();
+    }
+
+//     async function connectWallet() {
+//   // BYPASS WALLET for UI styling
+//   currentAccount = "0x1234567890abcdef1234567890abcdef12345678"; // fake address
+//   document.getElementById('walletAddress').textContent = 'Connected: ' + currentAccount;
+//   document.getElementById('networkWarning').style.display = 'none';
+//   updateUI();
+// }
+
+// localStorage.setItem('contractDetails', JSON.stringify({
+//   description: "Sample contract",
+//   from: { name: "Client", address: "0x1234567890abcdef1234567890abcdef12345678" },
+//   to: { name: "Freelancer", address: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" },
+//   deliverables: "Sample deliverables",
+//   deadline: "2024-12-31",
+//   payment: "1000 BDAG",
+//   milestones: "50% upfront, 50% on delivery",
+//   penalties: "Full refund if not delivered",
+//   status: "pending"
+// }));
+
+    document.getElementById('connectWalletBtn').onclick = connectWallet;
+
+    // Network switching functionality
+    document.getElementById('switchNetworkBtn').onclick = async function() {
+      if (!window.ethereum) {
+        alert('MetaMask is not installed!');
+        return;
+      }
+      
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: BLOCKDAG_TESTNET_CHAINID }],
+        });
+        // Refresh the page or reconnect wallet
+        connectWallet();
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: BLOCKDAG_TESTNET_CHAINID,
+                chainName: 'BlockDAG Testnet',
+                nativeCurrency: {
+                  name: 'BDAG',
+                  symbol: 'BDAG',
+                  decimals: 18
+                },
+                rpcUrls: ['https://test-rpc.primordial.bdagscan.com/'],
+                blockExplorerUrls: ['https://test.bdagscan.com/']
+              }],
+            });
+            connectWallet();
+          } catch (addError) {
+            alert('Failed to add BlockDAG network to MetaMask');
+          }
+        } else {
+          alert('Failed to switch to BlockDAG network');
+        }
+      }
+    };
+
+    // Remove contract creation logic. On load, read contractDetails from localStorage
+    window.addEventListener('DOMContentLoaded', function() {
+      const stored = localStorage.getItem('contractDetails');
+      if (stored) {
+        contractData = JSON.parse(stored);
+        contractStatus = contractData.status || 'pending';
+        updateUI();
+      }
+    });
+
+    const abi = [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "_client",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_freelancer",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "_description",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_deliverables",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_deadline",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_milestones",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "_penalties",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
+        "name": "amount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "client",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "deadline",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "deliverables",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "description",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "freelancer",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "fund",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "isFunded",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "isWithdrawn",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "milestones",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "penalties",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "releaseFunds",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "withdraw",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
+    async function getContract() {
+      const contractAddress = localStorage.getItem('deployedContractAddress');
+      if (!window.ethereum || !contractAddress) {
+        alert('MetaMask or contract address missing!');
+        return null;
+      }
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      return new ethers.Contract(contractAddress, abi, signer);
+    }
+
+    // Approve (release funds to freelancer)
+    document.getElementById('approveBtn').onclick = async function() {
+      const contract = await getContract();
+      if (!contract) return;
+      
+      try {
+        // Get current account
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        const currentAccount = accounts[0];
+        
+        // Check contract state before attempting transaction
+        const contractClient = await contract.client();
+        const contractFreelancer = await contract.freelancer();
+        const contractAmount = await contract.amount();
+        const isFunded = await contract.isFunded();
+        const isWithdrawn = await contract.isWithdrawn();
+        const contractBalance = await window.ethereum.request({
+          method: 'eth_getBalance',
+          params: [contract.address, 'latest']
+        });
+        
+        console.log('=== CONTRACT STATE CHECK ===');
+        console.log('Contract address:', contract.address);
+        console.log('Current account:', currentAccount);
+        console.log('Contract client:', contractClient);
+        console.log('Contract freelancer:', contractFreelancer);
+        console.log('Contract amount:', contractAmount.toString());
+        console.log('Is funded:', isFunded);
+        console.log('Is withdrawn:', isWithdrawn);
+        console.log('Contract balance (wei):', contractBalance);
+        console.log('Is current account the client?', currentAccount && contractClient && currentAccount.toLowerCase() === contractClient.toLowerCase());
+        
+        // Verify caller is the client
+        if (!currentAccount || !contractClient || currentAccount.toLowerCase() !== contractClient.toLowerCase()) {
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            resultDiv.textContent = '✗ Error: Only the client can release funds. Current account: ' + (currentAccount || 'Not connected') + ' | Contract client: ' + contractClient;
+          }
+          alert('Error: Only the client can release funds.\n\nCurrent account: ' + (currentAccount || 'Not connected') + '\nContract client: ' + contractClient + '\n\nPlease connect with the client wallet.');
+          return;
+        }
+        
+        if (!isFunded) {
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            resultDiv.textContent = '✗ Contract is not funded yet. Please fund the contract first.';
+          }
+          alert('Contract is not funded yet. Please fund the contract first.');
+          return;
+        }
+        
+        if (isWithdrawn) {
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            resultDiv.textContent = '✗ Funds have already been withdrawn from this contract.';
+          }
+          alert('Funds have already been withdrawn from this contract.');
+          return;
+        }
+        
+        // Check contract balance
+        const balanceWei = BigInt(contractBalance);
+        const expectedAmount = BigInt(contractAmount.toString());
+        if (balanceWei < expectedAmount) {
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            resultDiv.textContent = '✗ Contract balance (' + balanceWei.toString() + ' wei) is less than expected amount (' + expectedAmount.toString() + ' wei).';
+          }
+          alert('Contract balance is insufficient. Expected: ' + expectedAmount.toString() + ' wei, but contract has: ' + balanceWei.toString() + ' wei.');
+          return;
+        }
+        
+        // Verify the function exists by checking the contract interface
+        try {
+          // Try to get the function fragment - this will throw if function doesn't exist
+          const releaseFundsFragment = contract.interface.getFunction('releaseFunds');
+          console.log('releaseFunds function found:', releaseFundsFragment);
+          console.log('Function selector:', releaseFundsFragment.format('sighash'));
+        } catch (funcErr) {
+          console.error('Function check error:', funcErr);
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            resultDiv.textContent = '✗ This contract does not have the releaseFunds function. Please deploy a new contract with the updated code.';
+          }
+          alert('This contract does not have the releaseFunds function.\n\nPlease:\n1. Go to the deploy page\n2. Deploy a new contract with the updated code\n3. Make sure the contract was compiled with the latest SmartContract.sol file');
+          return;
+        }
+        
+        // Try a static call first to verify the function exists and check revert reason
+        try {
+          // Static call won't execute but will tell us if function exists and what would revert
+          await contract.callStatic.releaseFunds();
+          console.log('Static call successful - function exists and would succeed');
+        } catch (staticErr) {
+          console.error('Static call error:', staticErr);
+          // If static call fails, the transaction will definitely fail
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'error';
+            let errorDetail = 'Transaction will fail. ';
+            if (staticErr.reason) {
+              errorDetail += 'Reason: ' + staticErr.reason;
+            } else if (staticErr.message) {
+              errorDetail += 'Error: ' + staticErr.message;
+            }
+            resultDiv.textContent = '✗ ' + errorDetail;
+          }
+          alert('Transaction will fail. Check the result message and browser console for details.');
+          return;
+        }
+        
+        // Try to estimate gas - this will help identify the specific revert reason
+        try {
+          const gasEstimate = await contract.estimateGas.releaseFunds();
+          console.log('Gas estimation successful:', gasEstimate.toString());
+        } catch (estimateErr) {
+          console.error('Gas estimation error:', estimateErr);
+          // Try to decode the revert reason if available
+          let revertReason = 'Unknown error';
+          if (estimateErr.data) {
+            try {
+              // Try to decode the error data
+              const errorData = estimateErr.data;
+              if (typeof errorData === 'string' && errorData.startsWith('0x')) {
+                // Try to decode as a require/revert string
+                const decoded = contract.interface.parseError(errorData);
+                if (decoded) {
+                  revertReason = decoded.name + ': ' + JSON.stringify(decoded.args);
+                }
+              }
+            } catch (decodeErr) {
+              console.log('Could not decode error:', decodeErr);
+            }
+          }
+          
+          // Check if it's a specific revert reason we can handle
+          if (estimateErr.message && estimateErr.message.includes('execution reverted')) {
+            const resultDiv = document.getElementById('result');
+            if (resultDiv) {
+              resultDiv.style.display = 'block';
+              resultDiv.className = 'error';
+              resultDiv.textContent = '✗ Transaction will revert. Check console for details. State: isFunded=' + isFunded + ', isWithdrawn=' + isWithdrawn + ', client match=' + (currentAccount && contractClient && currentAccount.toLowerCase() === contractClient.toLowerCase());
+            }
+            alert('Transaction will revert. Please check:\n\n1. Contract is funded: ' + isFunded + '\n2. Funds not withdrawn: ' + !isWithdrawn + '\n3. You are the client: ' + (currentAccount && contractClient && currentAccount.toLowerCase() === contractClient.toLowerCase()) + '\n\nCheck browser console for more details.');
+            return;
+          }
+          
+          // If it's not a revert, it might be a function missing error
+          throw estimateErr;
+        }
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'info';
+        resultDiv.textContent = 'Sending transaction...';
+        
+        const tx = await contract.releaseFunds();
+        resultDiv.textContent = 'Transaction sent, waiting for confirmation... (tx: ' + tx.hash.substring(0, 10) + '...)';
+        await tx.wait();
+        
+        resultDiv.className = 'success';
+        resultDiv.textContent = '✓ Funds released to freelancer successfully!';
+        alert('Funds released to freelancer (on-chain).');
+        // Update status in localStorage and UI
+        const contractDetails = JSON.parse(localStorage.getItem('contractDetails'));
+        contractDetails.status = 'withdrawn';
+        localStorage.setItem('contractDetails', JSON.stringify(contractDetails));
+        window.contractData = contractDetails;
+        contractStatus = 'withdrawn';
+        updateUI();
+      } catch (err) {
+        console.error('Release funds error:', err);
+        let errorMsg = 'Error releasing funds: ' + err.message;
+        
+        // Provide more helpful error messages
+        if (err.message && err.message.includes('execution reverted')) {
+          if (err.message.includes('Only client can release funds')) {
+            errorMsg = 'Error: Only the client can release funds. Please connect with the client wallet.';
+          } else if (err.message.includes('Not funded yet')) {
+            errorMsg = 'Error: Contract is not funded yet.';
+          } else if (err.message.includes('Already withdrawn')) {
+            errorMsg = 'Error: Funds have already been withdrawn.';
+          } else if (err.message.includes('releaseFunds')) {
+            errorMsg = 'Error: This contract does not have the releaseFunds function. Please deploy a new contract with the updated code.';
+          } else {
+            errorMsg = 'Error: Transaction reverted. The contract may not have the releaseFunds function. Please deploy a new contract.';
+          }
+        }
+        
+        const resultDiv = document.getElementById('result');
+        if (resultDiv) {
+          resultDiv.style.display = 'block';
+          resultDiv.className = 'error';
+          resultDiv.textContent = '✗ ' + errorMsg;
+        }
+        alert(errorMsg);
+      }
+    };
+
+
+    // Load contract state from blockchain
+    async function loadContractState(contractAddress) {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const contract = new ethers.Contract(contractAddress, abi, provider);
+        
+        const [client, freelancer, amount, isFunded, isWithdrawn] = await Promise.all([
+          contract.client(),
+          contract.freelancer(),
+          contract.amount(),
+          contract.isFunded(),
+          contract.isWithdrawn()
+        ]);
+        
+        const balance = await provider.getBalance(contractAddress);
+        
+        const stateText = `Funded: ${isFunded} | Withdrawn: ${isWithdrawn} | Balance: ${ethers.utils.formatEther(balance)} BDAG | Amount: ${ethers.utils.formatEther(amount)} BDAG`;
+        document.getElementById('debugContractState').textContent = 'Contract State: ' + stateText;
+        
+        console.log('Contract state loaded:', {
+          address: contractAddress,
+          client,
+          freelancer,
+          amount: amount.toString(),
+          isFunded,
+          isWithdrawn,
+          balance: balance.toString()
+        });
+      } catch (err) {
+        console.error('Error loading contract state:', err);
+        if (err.message && err.message.includes('releaseFunds')) {
+          document.getElementById('debugContractState').textContent = 'Contract State: This contract does not have the releaseFunds function. Please deploy a new contract.';
+        } else {
+          document.getElementById('debugContractState').textContent = 'Contract State: Error - ' + err.message;
+        }
+        throw err;
+      }
+    }
+
+    // UI update logic
+    function updateUI() {
+      // Debug logging
+      console.log('=== DEBUG UI UPDATE ===');
+      console.log('Current account:', currentAccount);
+      console.log('Contract data:', contractData);
+      console.log('Contract status:', contractStatus);
+      console.log('Freelancer address:', contractData?.toAddress);
+      console.log('Client address:', contractData?.fromAddress);
+
+      // Update debug info
+      document.getElementById('debugContractAddress').textContent = 'Contract Address: ' + (contractData?.contractAddress || 'Not set');
+      document.getElementById('debugCurrentAccount').textContent = 'Current Account: ' + (currentAccount || 'Not connected');
+      document.getElementById('debugStatus').textContent = 'Status: ' + contractStatus;
+      document.getElementById('debugIsFreelancer').textContent = 'Is Freelancer: ' + (currentAccount && contractData?.toAddress && currentAccount.toLowerCase() === contractData.toAddress.toLowerCase() ? 'Yes' : 'No');
+      document.getElementById('debugIsClient').textContent = 'Is Client: ' + (currentAccount && contractData?.fromAddress && currentAccount.toLowerCase() === contractData.fromAddress.toLowerCase() ? 'Yes' : 'No');
+      
+      // Load and display contract state from blockchain
+      if (contractData?.contractAddress && window.ethereum) {
+        loadContractState(contractData.contractAddress).catch(err => {
+          console.error('Error loading contract state:', err);
+          document.getElementById('debugContractState').textContent = 'Contract State: Error loading - ' + err.message;
+        });
+      } else {
+        document.getElementById('debugContractState').textContent = 'Contract State: No contract address or wallet not connected';
+      }
+
+      // Hide all sections by default
+      document.getElementById('contract-section').classList.add('hidden');
+      document.getElementById('clientActions').classList.add('hidden');
+      document.getElementById('notParticipant').classList.add('hidden');
+
+      if (!contractData) return;
+
+      // Fill contract details
+      document.getElementById('desc').textContent = contractData.description || '';
+      document.getElementById('clientAddr').textContent = contractData.fromAddress || '';
+      document.getElementById('freelancerAddr').textContent = contractData.toAddress || '';
+      document.getElementById('deliverables').textContent = contractData.deliverables || '';
+      document.getElementById('deadline').textContent = contractData.deadline || '';
+      document.getElementById('payment').textContent = contractData.payment || '';
+      document.getElementById('milestones').textContent = contractData.milestones || '';
+      document.getElementById('penalties').textContent = contractData.penalties || '';
+      document.getElementById('status').textContent = contractData.status || contractStatus;
+
+      // Deadline progress
+      const now = new Date();
+      const deadlineDate = new Date(contractData.deadline);
+      const createdDate = new Date(); // No created field, so use now
+      const total = deadlineDate - createdDate;
+      const elapsed = now - createdDate;
+      let percent = Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
+      if (isNaN(percent) || percent < 0) percent = 0;
+      document.getElementById('progressBar').style.width = percent + '%';
+      const daysLeft = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
+      document.getElementById('daysLeft').textContent = daysLeft >= 0 ? daysLeft + ' days left' : 'Deadline passed';
+
+      document.getElementById('contract-section').classList.remove('hidden');
+
+      // Role-based UI
+      console.log('=== ROLE CHECK ===');
+      const isClient = currentAccount && contractData.fromAddress && currentAccount.toLowerCase() === contractData.fromAddress.toLowerCase();
+      const isFreelancer = currentAccount && contractData.toAddress && currentAccount.toLowerCase() === contractData.toAddress.toLowerCase();
+      console.log('Is client?', isClient);
+      console.log('Is freelancer?', isFreelancer);
+      console.log('Status:', contractStatus);
+
+      if (isClient) {
+        // Client view - show approve button when funds are in escrow (status = 'approved')
+        console.log('Showing CLIENT actions');
+        if (contractStatus === 'approved') {
+          document.getElementById('clientActions').classList.remove('hidden');
+        }
+      } else if (isFreelancer) {
+        // Freelancer can view but cannot take actions (only client can approve/release)
+        console.log('Freelancer view - no actions available');
+      } else {
+        // Not a participant
+        console.log('Not a participant - showing warning');
+        document.getElementById('notParticipant').classList.remove('hidden');
+      }
+    }
+
+    // Listen for account/network changes
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', () => { connectWallet(); });
+      window.ethereum.on('chainChanged', () => { connectWallet(); });
+    }
+  </script>
+</body>
+</html>

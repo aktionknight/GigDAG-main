@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Smart Contract Generator - Generate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">GigDAG</div>
+    <ul class="nav-links">
+      <li><a href="index.html#about">About</a></li>
+      <li><a href="https://youtu.be/rKlchDIl7js">Demo</a></li>
+      <li><a href="#" id="helpLink">Help</a></li>
+      <li><button id="navWalletBtn" class="wallet-btn">Connect Wallet</button></li>
+    </ul>
+  </nav>
+  <main class="main-layout">
+    <section class="form-section" id="generate-section">
+      <h2>Generate & Deploy</h2>
+      <p>Generate a PDF of your contract or deploy it as a smart contract on the blockchain.</p>
+      <div class="form-actions">
+        <button id="generatePdfBtn" class="submit-btn">Generate PDF</button>
+        <button id="deployContractBtn" class="submit-btn">Deploy Smart Contract</button>
+      </div>
+      <div id="statusMessage" style="margin-top:20px;color:#666;"></div>
+      <h3>Generated Solidity Contract</h3>
+      <pre><code id="solidityContract" style="background:#f4f8fb;display:block;padding:1em;border-radius:8px;overflow-x:auto;"></code></pre>
+      <button id="copySolidityBtn" class="submit-btn" style="margin-top:10px;">Copy Contract</button>
+    </section>
+  </main>
+  <footer>
+    <p>Built with <3 by Dogecoin</p>
+  </footer>
+  <!-- Wallet Modal -->
+  <div id="walletModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeWalletModal">&times;</span>
+      <h2>Wallet Connection</h2>
+      <div class="wallet-status-box">
+        <div id="walletIndicator" class="status-dot"></div>
+        <p id="walletStatusText">Not Connected</p>
+      </div>
+      <p id="walletAddressDisplay" class="address-text"></p>
+      <button id="connectMetaMaskBtn" class="cta-btn full-width">Connect MetaMask</button>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeHelpModal">&times;</span>
+      <h2>Need Help?</h2>
+      <div id="helpModalBody" class="bdag-help-container">
+        <h2 class="bdag-help-header">How to Connect & Get BDAG Testnet Tokens</h2>
+        <div class="bdag-step">
+          <div class="bdag-step-title"><span class="bdag-step-number">1.</span> Configure Your Wallet (MetaMask)</div>
+          <p>Open your wallet settings, select <strong>"Add Network"</strong>, and choose <strong>"Add a network manually"</strong>. Enter the following details:</p>
+          <table class="bdag-config-table">
+            <tbody>
+              <tr><th>Network Name</th><td>BlockDAG Awakening</td></tr>
+              <tr><th>RPC URL</th><td><span class="bdag-code">https://rpc.awakening.bdagscan.com</span></td></tr>
+              <tr><th>Chain ID</th><td><span class="bdag-code">1043</span></td></tr>
+              <tr><th>Currency Symbol</th><td><span class="bdag-code">BDAG</span></td></tr>
+              <tr><th>Block Explorer</th><td><span class="bdag-code">https://bdagscan.com</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bdag-step">
+          <div class="bdag-step-title"><span class="bdag-step-number">2</span> Claim Test Tokens</div>
+          <p>Once your wallet is configured, you need test tokens to pay for gas fees. You can get these for free from the official faucet.</p>
+          <ol style="padding-left: 20px; margin-top: 10px; margin-bottom: 15px;">
+            <li>Copy your wallet address from MetaMask.</li>
+            <li>Visit the <strong>BlockDAG Faucet</strong> below.</li>
+            <li>Paste your address and click <strong>"Request"</strong> or <strong>"Mint"</strong>.</li>
+          </ol>
+          <a href="https://bdagscan.com" target="_blank" class="bdag-button-link">Go to Explorer Faucet &rarr;</a>
+          <div class="bdag-note">
+            <strong>Tip:</strong> If the web faucet is undergoing maintenance, you can often request tokens in the <code>#faucet-testnet</code> channel of the official BlockDAG Discord server.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="nav.js" defer></script>
+  <script src="input.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    // Helper to format contract details as text
+    function formatContractDetails(details) {
+      return `Contract Details\n\n` +
+        `Description: ${details.description || ''}\n` +
+        `From: ${details.from?.name || ''}\n` +
+        `From Address: ${details.from?.address || ''}\n` +
+        `To: ${details.to?.name || ''}\n` +
+        `To Address: ${details.to?.address || ''}\n` +
+        `Deliverables: ${details.deliverables || ''}\n` +
+        `Deadline: ${details.deadline || ''}\n` +
+        `Payment: ${details.payment || ''}\n` +
+        `Milestones: ${details.milestones || ''}\n` +
+        `Penalties: ${details.penalties || ''}`;
+    }
+
+    // Generate Solidity contract from JSON
+    function generateSolidityContract(details) {
+      // Extract amount from payment string (e.g., '₹10,000 on completion')
+      let amount = 0;
+      if (details.payment) {
+        const match = details.payment.replace(/,/g, '').match(/\d+/);
+        if (match) amount = parseInt(match[0], 10);
+      }
+      return `// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ncontract SmartContract {\n    address public client = ${details.from?.address ? 'payable(address(' + JSON.stringify(details.from.address) + '))' : 'payable(address(0))'};\n    address public freelancer = ${details.to?.address ? 'payable(address(' + JSON.stringify(details.to.address) + '))' : 'payable(address(0))'};\n    uint public amount = ${amount};\n    string public description = ${JSON.stringify(details.description || '')};\n    string public deliverables = ${JSON.stringify(details.deliverables || '')};\n    string public deadline = ${JSON.stringify(details.deadline || '')};\n    string public milestones = ${JSON.stringify(details.milestones || '')};\n    string public penalties = ${JSON.stringify(details.penalties || '')};\n    // Add contract logic here\n}`;
+    }
+
+    // On page load, generate and display contract
+    window.addEventListener('DOMContentLoaded', function() {
+      const details = JSON.parse(localStorage.getItem('contractDetails') || '{}');
+      const solidity = generateSolidityContract(details);
+      document.getElementById('solidityContract').textContent = solidity;
+    });
+
+    document.getElementById('copySolidityBtn').onclick = function() {
+      const code = document.getElementById('solidityContract').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        document.getElementById('statusMessage').textContent = 'Solidity contract copied!';
+      });
+    };
+
+    document.getElementById('generatePdfBtn').onclick = function() {
+      const details = JSON.parse(localStorage.getItem('contractDetails') || '{}');
+      if (!details || Object.keys(details).length === 0) {
+        document.getElementById('statusMessage').textContent = 'No contract details found. Please generate a contract first.';
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const text = formatContractDetails(details);
+      doc.setFont('helvetica');
+      doc.setFontSize(12);
+      doc.text(text, 10, 20);
+      doc.save('contract.pdf');
+      document.getElementById('statusMessage').textContent = 'PDF downloaded!';
+    };
+  </script>
+</body>
+</html>
