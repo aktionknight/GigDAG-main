@@ -25,12 +25,11 @@ app.get('/', (req, res) => {
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-app.post('/extract', async (req, res) => {
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: 'No text provided' });
-  if (!GEMINI_API_KEY) return res.status(500).json({ error: 'Server missing Gemini API key' });
+// factor extraction into a reusable function
+async function runExtraction(text) {
+  if (!text) throw new Error('No text provided');
+  if (!GEMINI_API_KEY) throw new Error('Server missing Gemini API key');
 
-  // Gemini prompt1 for structured extraction
   const prompt11 = `
 Extract the following details from this contract description:
 - From (the party offering the contract)
@@ -46,50 +45,63 @@ Return the result as a JSON object with keys: description, from, to, deliverable
 Description: """${text}"""
 `;
 
-
-  try {
-    const response = await axios.post(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_API_KEY,
-      {
-        contents: [{ parts: [{ text: prompt11 }] }]
-      }
-    );
-    // Parse Gemini's response
-    const aiText = response.data.candidates[0].content.parts[0].text;
-    // Try to extract JSON from the response
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const extracted = JSON.parse(jsonMatch[0]);
-      // Format deadline to dd-mm-yyyy if possible
-      if (extracted.deadline) {
-        let date = new Date(extracted.deadline);
-        if (isNaN(date.getTime())) {
-          // Try to parse formats like '28th of July' or '28 July' and assume year 2025
-          const match = extracted.deadline.match(/(\d{1,2})(?:st|nd|rd|th)?(?: of)? ([A-Za-z]+)/);
-          if (match) {
-            const day = match[1];
-            const monthName = match[2];
-            const months = ["january","february","march","april","may","june","july","august","september","october","november","december"];
-            const monthIndex = months.findIndex(m => m.startsWith(monthName.toLowerCase()));
-            if (monthIndex !== -1) {
-              date = new Date(2025, monthIndex, parseInt(day));
-            }
-          }
-        }
-        if (!isNaN(date.getTime())) {
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          extracted.deadline = `${day}-${month}-${year}`; // for display
-          extracted.deadline_iso = `${year}-${month}-${day}`; // for input[type=date]
-        }
-      }
-      res.json(extracted);
-    } else {
-      res.status(500).json({ error: 'AI did not return valid JSON', raw: aiText });
+  const response = await axios.post(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_API_KEY,
+    {
+      contents: [{ parts: [{ text: prompt11 }] }]
     }
+  );
+  const aiText = response.data.candidates[0].content.parts[0].text;
+  const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('AI did not return valid JSON');
+  const extracted = JSON.parse(jsonMatch[0]);
+
+  if (extracted.deadline) {
+    let date = new Date(extracted.deadline);
+    if (isNaN(date.getTime())) {
+      const match = extracted.deadline.match(/(\d{1,2})(?:st|nd|rd|th)?(?: of)? ([A-Za-z]+)/);
+      if (match) {
+        const day = match[1];
+        const monthName = match[2];
+        const months = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+        const monthIndex = months.findIndex(m => m.startsWith(monthName.toLowerCase()));
+        if (monthIndex !== -1) {
+          date = new Date(2025, monthIndex, parseInt(day));
+        }
+      }
+    }
+    if (!isNaN(date.getTime())) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      extracted.deadline = `${day}-${month}-${year}`;
+      extracted.deadline_iso = `${year}-${month}-${day}`;
+    }
+  }
+
+  return extracted;
+}
+
+// existing extract endpoint now uses the function
+app.post('/extract', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const extracted = await runExtraction(text);
+    res.json(extracted);
   } catch (err) {
-    console.error('Gemini API error:', err.response?.data || err.message);
+    console.error('Extraction error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message, details: err.response?.data });
+  }
+});
+
+// Accept POST to root as well (some frontends post to /); delegate to same handler
+app.post('/', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const extracted = await runExtraction(text);
+    res.json(extracted);
+  } catch (err) {
+    console.error('Root POST extraction error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message, details: err.response?.data });
   }
 });
@@ -137,6 +149,6 @@ ${JSON.stringify(contractDetails, null, 2)}
   }
 });
 
-
-const PORT = 3001;
+// use runtime port
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`AI backend running on http://localhost:${PORT}`));

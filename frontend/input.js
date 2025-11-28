@@ -10,11 +10,13 @@ let recognition;
 // Replace the simple mock AI extraction function with a backend call
 async function extractContractDetails(text) {
   try {
-    const res = await fetch('https://gigdag-main.onrender.com', {
+    // Use relative path to hit same-origin backend (ensure backend serves /extract)
+    const res = await fetch('https://gigdag-main.onrender.com/extract', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text })
     });
+
     if (!res.ok) {
       const errorPayload = await res.json().catch(() => ({}));
       throw new Error(errorPayload.error || `Request failed with status ${res.status}`);
@@ -22,7 +24,7 @@ async function extractContractDetails(text) {
     return await res.json();
   } catch (err) {
     console.error('AI extraction failed:', err);
-    alert('AI extraction failed. Please ensure the backend is running on https://gigdag-main.onrender.com and try again.');
+    alert('AI extraction failed. Please ensure the backend is running and try again.');
     return {
       description: text,
       parties: '',
@@ -47,4 +49,4 @@ nextBtn.onclick = async () => {
   const extracted = await extractContractDetails(text);
   localStorage.setItem('contractDetails', JSON.stringify(extracted));
   window.location.href = 'contract.html';
-}; 
+};
